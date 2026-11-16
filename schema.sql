@@ -22,6 +22,7 @@ create table results (
   score int not null,
   total int not null,
   violations int default 0,           -- times the student left the test page
+  answers jsonb,                      -- { questionId: chosenIndex (-1 = unanswered) }
   created_at timestamptz default now()
 );
 alter table tests enable row level security;
@@ -33,3 +34,5 @@ alter table results enable row level security;
 -- alter table results add column surname text, add column grp text;
 -- Anti-cheat column on an existing DB:
 -- alter table results add column violations int default 0;
+-- Per-question analysis on an existing DB:
+-- alter table results add column answers jsonb;

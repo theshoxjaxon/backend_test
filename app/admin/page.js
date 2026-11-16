@@ -9,7 +9,7 @@ export default function Admin() {
   const [pw, setPw] = useState(''), [authed, setAuthed] = useState(false), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   const [tests, setTests] = useState([]), [tid, setTid] = useState(''), [qs, setQs] = useState([]), [rs, setRs] = useState([]);
   const [tab, setTab] = useState('results'), [group, setGroup] = useState('ALL'), [search, setSearch] = useState('');
-  const [slug, setSlug] = useState(''), [title, setTitle] = useState(''), [json, setJson] = useState('');
+  const [open, setOpen] = useState(null), [slug, setSlug] = useState(''), [title, setTitle] = useState(''), [json, setJson] = useState('');
 
   const api = async (p, method = 'GET', body, pass = pw) => {
     const r = await fetch('/api/admin' + p, { method, headers: { 'content-type': 'application/json', 'x-admin-password': pass }, body: body && JSON.stringify(body) });
@@ -44,6 +44,14 @@ export default function Admin() {
     rows.filter(r => `${r.surname} ${r.student}`.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => (a.surname ?? '').localeCompare(b.surname ?? ''))]).filter(([, rows]) => rows.length);
 
+  // per-question stats from stored answers (older results have none)
+  const stats = useMemo(() => qs.map(q => {
+    const seen = rs.filter(r => r.answers && q.id in r.answers), wrong = seen.filter(r => r.answers[q.id] !== q.answer);
+    const picks = q.options.map((_, j) => seen.filter(r => r.answers[q.id] === j).length);
+    return { q, seen: seen.length, wrong: wrong.length, skipped: seen.filter(r => r.answers[q.id] < 0).length, picks, rate: seen.length ? Math.round(wrong.length / seen.length * 100) : -1 };
+  }).sort((a, b) => b.rate - a.rate), [qs, rs]);
+  const noData = rs.filter(r => !r.answers).length;
+
   function exportCsv() {
     const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const rows = [['Group', 'Surname', 'Name', 'Score', 'Total', 'Percent', 'Submitted'],
@@ -66,7 +74,7 @@ export default function Admin() {
     </div>
     {cur && <a href={`http://localhost:5175/${cur.slug}`} target="_blank">student link: localhost:5175/{cur.slug}</a>}
     <span className="err"> {err}</span>
-    <div className="adm-tabs">{[['results', `Results (${rs.length})`], ['questions', `Questions (${qs.length})`], ['tests', 'Tests']].map(([k, label]) =>
+    <div className="adm-tabs">{[['results', `Results (${rs.length})`], ['analysis', 'Analysis'], ['questions', `Questions (${qs.length})`], ['tests', 'Tests']].map(([k, label]) =>
       <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{label}</button>)}</div>
 
     {tab === 'results' && <>
@@ -89,9 +97,20 @@ export default function Admin() {
             <td><b>{r.score}/{r.total}</b></td><td className={pct(r) >= 60 ? 'adm-pass' : 'adm-fail'}>{pct(r)}%</td>
             <td className={r.violations ? 'adm-fail' : ''}>{r.violations ?? 0}</td>
             <td>{new Date(r.created_at).toLocaleString()}</td>
-            <td><button className="x" title="Delete result" onClick={run(async () => { if (confirm(`Delete result of ${r.surname} ${r.student}?`)) { await api('/results/' + r.id, 'DELETE'); refresh(); } })}>×</button></td></tr>)}</tbody></table>
+            <td><button disabled={!r.answers} title={r.answers ? 'Show answers' : 'No answer data saved'} onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? '▲' : '▼'}</button> <button className="x" title="Delete result" onClick={run(async () => { if (confirm(`Delete result of ${r.surname} ${r.student}?`)) { await api('/results/' + r.id, 'DELETE'); refresh(); } })}>×</button></td></tr>)}</tbody></table>
+        {rows.filter(r => r.id === open).map(r => <div key={r.id} className="adm-detail"><b>{r.surname} {r.student}</b> — wrong answers:
+          {qs.filter(q => r.answers[q.id] !== undefined && r.answers[q.id] !== q.answer).map(q => <div key={q.id} className="adm-q">
+            <b>{q.text}</b><br /><span className="adm-fail">Chose: {r.answers[q.id] < 0 ? '— (no answer)' : q.options[r.answers[q.id]]}</span> · <span className="adm-pass">Correct: {q.options[q.answer]}</span></div>)}
+          {r.score === r.total && <div>None — perfect score 🎉</div>}</div>)}
       </div>)}
     </>}
+
+    {tab === 'analysis' && <div className="card"><b>Hardest questions first</b> (% of students who got it wrong)
+      {noData > 0 && <div><small>{noData} older result(s) have no answer data and are not counted.</small></div>}
+      {stats.map(({ q, seen, wrong, skipped, picks, rate }) => <div key={q.id} className="adm-q">
+        <b className={rate >= 50 ? 'adm-fail' : ''}>{rate < 0 ? 'no data' : `${rate}% wrong`}</b> ({wrong}/{seen}{skipped ? `, ${skipped} skipped` : ''}) — {q.text}<br />
+        <small>{q.options.map((o, j) => <span key={j} className={j === q.answer ? 'adm-pass' : ''}>{o} [{picks[j]}] · </span>)}</small></div>)}
+    </div>}
 
     {tab === 'questions' && <>
       <div className="card"><b>Add questions</b> (JSON array; <code>answer</code> = 0-based index of the correct option; optional <code>text_ru</code>, <code>options_ru</code>)

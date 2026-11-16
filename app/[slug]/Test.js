@@ -124,7 +124,7 @@ export default function Test({ slug, title, questions = [] }) {
   const [showWarn, setShowWarn] = useState(false);
   const submitRef = useRef();
 
-  // Anti-cheat: tab switch / window blur / leaving fullscreen = violation. Auto-submit at MAX_VIOLATIONS.
+  // Anti-cheat: tab switch / window blur = violation. Auto-submit at MAX_VIOLATIONS.
   useEffect(() => {
     if (!started || done) return;
     let last = 0;
@@ -135,7 +135,6 @@ export default function Test({ slug, title, questions = [] }) {
       setShowWarn(true);
     };
     const onVis = () => document.hidden && hit();
-    const onFs = () => !document.fullscreenElement && hit();
     const stop = e => e.preventDefault();
     const onKey = e => {
       const k = e.key.toLowerCase();
@@ -148,13 +147,11 @@ export default function Test({ slug, title, questions = [] }) {
     const onUnload = e => { e.preventDefault(); e.returnValue = ''; };
     document.addEventListener('visibilitychange', onVis);
     window.addEventListener('blur', hit);
-    document.addEventListener('fullscreenchange', onFs);
     window.addEventListener('beforeunload', onUnload);
     for (const ev of ['copy', 'cut', 'paste', 'contextmenu', 'dragstart']) document.addEventListener(ev, stop);
     return () => {
       document.removeEventListener('visibilitychange', onVis);
       window.removeEventListener('blur', hit);
-      document.removeEventListener('fullscreenchange', onFs);
       window.removeEventListener('beforeunload', onUnload);
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('keyup', onKey);
@@ -192,7 +189,6 @@ export default function Test({ slug, title, questions = [] }) {
       setErr(t.fill);
       return;
     }
-    document.documentElement.requestFullscreen?.().catch(() => {});
     setStarted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -592,17 +588,13 @@ export default function Test({ slug, title, questions = [] }) {
             </div>
           </div>
 
-          <div className="wm" aria-hidden="true">
-            {Array.from({ length: 60 }, (_, i) => <span key={i}>{me.surname} {me.name} · {me.group}</span>)}
-          </div>
-
           {showWarn && !done && violations < MAX_VIOLATIONS && (
             <div className="modal-backdrop">
               <div className="modal-box">
                 <div className="modal-icon-badge">🚫</div>
                 <p className="modal-text">{t.leftWarn(violations, MAX_VIOLATIONS)}</p>
                 <div className="modal-actions">
-                  <button type="button" className="btn-danger" onClick={() => { setShowWarn(false); document.documentElement.requestFullscreen?.().catch(() => {}); }}>{t.leftOk}</button>
+                  <button type="button" className="btn-danger" onClick={() => setShowWarn(false)}>{t.leftOk}</button>
                 </div>
               </div>
             </div>

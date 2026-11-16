@@ -1302,7 +1302,7 @@ main th{font-size:.75rem;text-transform:uppercase;color:var(--text-muted,#94a3b8
 section { -webkit-user-select: none; user-select: none; }
 input, textarea { -webkit-user-select: text; user-select: text; }
 
-/* anti-cheat: name watermark so any leaked screenshot is traceable; nothing prints */
-.wm { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around; opacity: .08; transform: rotate(-20deg) scale(1.4); font-weight: 700; }
-.wm span { padding: 1.5rem; white-space: nowrap; }
+/* anti-cheat: nothing prints */
 @media print { body { display: none !important; } }
+.adm-detail{margin-top:12px;padding:12px;border:1px solid var(--border-subtle,#8884);border-radius:12px}
+.adm-q{padding:8px 0;border-top:1px solid var(--border-subtle,#8883)}
