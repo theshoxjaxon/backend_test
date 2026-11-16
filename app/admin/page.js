@@ -84,9 +84,10 @@ export default function Admin() {
       {!rs.length && <div className="card">{busy ? 'Loading…' : 'No results yet.'}</div>}
       {shown.map(([g, rows]) => <div className="card" key={g}>
         <b>{g}</b> — {rows.length} student{rows.length > 1 ? 's' : ''}, average {avg(rows)}%
-        <table><thead><tr><th>#</th><th>Surname</th><th>Name</th><th>Score</th><th>%</th><th>Submitted</th><th></th></tr></thead>
+        <table><thead><tr><th>#</th><th>Surname</th><th>Name</th><th>Score</th><th>%</th><th>Left page</th><th>Submitted</th><th></th></tr></thead>
           <tbody>{rows.map((r, i) => <tr key={r.id}><td>{i + 1}</td><td>{r.surname}</td><td>{r.student}</td>
             <td><b>{r.score}/{r.total}</b></td><td className={pct(r) >= 60 ? 'adm-pass' : 'adm-fail'}>{pct(r)}%</td>
+            <td className={r.violations ? 'adm-fail' : ''}>{r.violations ?? 0}</td>
             <td>{new Date(r.created_at).toLocaleString()}</td>
             <td><button className="x" title="Delete result" onClick={run(async () => { if (confirm(`Delete result of ${r.surname} ${r.student}?`)) { await api('/results/' + r.id, 'DELETE'); refresh(); } })}>×</button></td></tr>)}</tbody></table>
       </div>)}

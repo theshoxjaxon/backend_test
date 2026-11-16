@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 const UI = {
   uz: {
@@ -32,6 +32,8 @@ const UI = {
     modalDesc: n => `Siz ${n} ta savolga hali javob bermadingiz. Savol raqamiga bosib unga o‘tishingiz yoki testni baribir topshirishingiz mumkin:`,
     modalBack: 'Savollarga qaytish',
     modalForce: 'Baribir topshirish',
+    leftWarn: (n, max) => `Siz test sahifasidan chiqdingiz! Ogohlantirish ${n}/${max}. ${max} martaga yetganda test avtomatik topshiriladi.`,
+    leftOk: 'Tushundim',
     doneTitle: 'Test muvaffaqiyatli topshirildi!',
     doneDesc: 'Sizning javoblaringiz qabul qilindi va tizimda xavfsiz saqlandi. Natijalar o‘qituvchingiz tomonidan ko‘rib chiqiladi.',
     summaryStudent: 'Talaba',
@@ -71,6 +73,8 @@ const UI = {
     modalDesc: n => `Вы не ответили на ${n} вопросов. Вы можете нажать на номер вопроса, чтобы перейти к нему, или отправить тест:`,
     modalBack: 'Вернуться к вопросам',
     modalForce: 'Всё равно отправить',
+    leftWarn: (n, max) => `Вы покинули страницу теста! Предупреждение ${n}/${max}. После ${max} тест отправится автоматически.`,
+    leftOk: 'Понятно',
     doneTitle: 'Тест успешно сдан!',
     doneDesc: 'Ваши ответы приняты и сохранены в системе. Результаты будут объявлены преподавателем.',
     summaryStudent: 'Студент',
@@ -100,6 +104,8 @@ function FormattedText({ text }) {
   );
 }
 
+const MAX_VIOLATIONS = 3;
+
 export default function Test({ slug, title, questions = [] }) {
   const [lang, setLang] = useState('uz');
   const t = UI[lang];
@@ -114,6 +120,49 @@ export default function Test({ slug, title, questions = [] }) {
   const [done, setDone] = useState(false);
   const [completedAt, setCompletedAt] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [violations, setViolations] = useState(0);
+  const [showWarn, setShowWarn] = useState(false);
+  const submitRef = useRef();
+
+  // Anti-cheat: tab switch / window blur / leaving fullscreen = violation. Auto-submit at MAX_VIOLATIONS.
+  useEffect(() => {
+    if (!started || done) return;
+    let last = 0;
+    const hit = () => {
+      if (Date.now() - last < 1000) return; // one leave fires several events
+      last = Date.now();
+      setViolations(v => v + 1);
+      setShowWarn(true);
+    };
+    const onVis = () => document.hidden && hit();
+    const onFs = () => !document.fullscreenElement && hit();
+    const stop = e => e.preventDefault();
+    const onKey = e => {
+      const k = e.key.toLowerCase();
+      if (k === 'printscreen') { navigator.clipboard?.writeText('').catch(() => {}); hit(); }
+      // ponytail: keyboard blocking is best-effort; OS screenshot shortcuts (Cmd+Shift+3/4) can't be caught by a page
+      if (((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 's', 'p', 'u', 'f'].includes(k)) || k === 'f12') e.preventDefault();
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('keyup', onKey);
+    const onUnload = e => { e.preventDefault(); e.returnValue = ''; };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('blur', hit);
+    document.addEventListener('fullscreenchange', onFs);
+    window.addEventListener('beforeunload', onUnload);
+    for (const ev of ['copy', 'cut', 'paste', 'contextmenu', 'dragstart']) document.addEventListener(ev, stop);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('blur', hit);
+      document.removeEventListener('fullscreenchange', onFs);
+      window.removeEventListener('beforeunload', onUnload);
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('keyup', onKey);
+      for (const ev of ['copy', 'cut', 'paste', 'contextmenu', 'dragstart']) document.removeEventListener(ev, stop);
+    };
+  }, [started, done]);
+
+  useEffect(() => { if (violations >= MAX_VIOLATIONS && !done && !busy) submitRef.current(); }, [violations]); // eslint-disable-line
 
   // Statistics
   const answeredCount = Object.keys(answers).length;
@@ -143,6 +192,7 @@ export default function Test({ slug, title, questions = [] }) {
       setErr(t.fill);
       return;
     }
+    document.documentElement.requestFullscreen?.().catch(() => {});
     setStarted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -169,6 +219,7 @@ export default function Test({ slug, title, questions = [] }) {
           ...me,
           answers,
           ids: questions.map(q => q.id),
+          violations,
         }),
       });
       const r = await res.json();
@@ -185,6 +236,8 @@ export default function Test({ slug, title, questions = [] }) {
       setErr(e.message || 'Error submitting test');
     }
   }
+
+  submitRef.current = executeSubmit;
 
   function handleSubmitClick() {
     setErr('');
@@ -538,6 +591,22 @@ export default function Test({ slug, title, questions = [] }) {
               </button>
             </div>
           </div>
+
+          <div className="wm" aria-hidden="true">
+            {Array.from({ length: 60 }, (_, i) => <span key={i}>{me.surname} {me.name} · {me.group}</span>)}
+          </div>
+
+          {showWarn && !done && violations < MAX_VIOLATIONS && (
+            <div className="modal-backdrop">
+              <div className="modal-box">
+                <div className="modal-icon-badge">🚫</div>
+                <p className="modal-text">{t.leftWarn(violations, MAX_VIOLATIONS)}</p>
+                <div className="modal-actions">
+                  <button type="button" className="btn-danger" onClick={() => { setShowWarn(false); document.documentElement.requestFullscreen?.().catch(() => {}); }}>{t.leftOk}</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Smart Confirmation Modal for Unanswered Questions */}
           {showConfirmModal && (

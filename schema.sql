@@ -21,6 +21,7 @@ create table results (
   grp text,                           -- group number
   score int not null,
   total int not null,
+  violations int default 0,           -- times the student left the test page
   created_at timestamptz default now()
 );
 alter table tests enable row level security;
@@ -30,3 +31,5 @@ alter table results enable row level security;
 -- Already ran the old version? Run only these instead:
 -- alter table questions add column text_ru text, add column options_ru jsonb;
 -- alter table results add column surname text, add column grp text;
+-- Anti-cheat column on an existing DB:
+-- alter table results add column violations int default 0;

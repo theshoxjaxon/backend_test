@@ -1297,3 +1297,12 @@ tr:hover td {
 .adm-pass{color:var(--success,#10b981);font-weight:600}.adm-fail{color:var(--danger,#ef4444);font-weight:600}
 main table{width:100%;border-collapse:collapse;margin-top:10px}main th,main td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border-subtle,#8883);vertical-align:top}
 main th{font-size:.75rem;text-transform:uppercase;color:var(--text-muted,#94a3b8)}
+
+/* anti-cheat: no text selection while taking the test */
+section { -webkit-user-select: none; user-select: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+/* anti-cheat: name watermark so any leaked screenshot is traceable; nothing prints */
+.wm { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around; opacity: .08; transform: rotate(-20deg) scale(1.4); font-weight: 700; }
+.wm span { padding: 1.5rem; white-space: nowrap; }
+@media print { body { display: none !important; } }
