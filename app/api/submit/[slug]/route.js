@@ -13,7 +13,13 @@ export async function POST(req, { params }) {
     const ids = [...new Set(body.ids)], total = Math.min(PER_STUDENT, qs.length), given = qs.filter(q => ids.includes(q.id));
     if (ids.length !== total || given.length !== total) return bad('Invalid question set');
     const score = given.filter(q => answers[q.id] === q.answer).length;
-    ok(await db.from('results').insert({ test_id: t.id, student, surname, grp, score, total, violations: Math.min(99, Math.max(0, parseInt(body.violations) || 0)) }));
+    const row = { test_id: t.id, student, surname, grp, score, total, violations: Math.min(99, Math.max(0, parseInt(body.violations) || 0)) };
+    let { error } = await db.from('results').insert(row);
+    if (error && /violations/.test(error.message)) { // column not migrated yet: still save the result
+      delete row.violations;
+      ({ error } = await db.from('results').insert(row));
+    }
+    ok({ error });
     return Response.json({ ok: true }); // students never see the score; only the admin does
   } catch (e) { console.error(e); return bad(e.message, 500); }
 }
