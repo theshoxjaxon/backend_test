@@ -92,16 +92,16 @@ export default function Admin() {
       {!rs.length && <div className="card">{busy ? 'Loading…' : 'No results yet.'}</div>}
       {shown.map(([g, rows]) => <div className="card" key={g}>
         <b>{g}</b> — {rows.length} student{rows.length > 1 ? 's' : ''}, average {avg(rows)}%
-        <table><thead><tr><th>#</th><th>Surname</th><th>Name</th><th>Score</th><th>%</th><th>Left page</th><th>Submitted</th><th></th></tr></thead>
-          <tbody>{rows.map((r, i) => <tr key={r.id}><td>{i + 1}</td><td>{r.surname}</td><td>{r.student}</td>
+        <table><thead><tr><th>#</th><th colSpan={2}>Student</th><th>Score</th><th>%</th><th>Left page</th><th>Submitted</th><th></th></tr></thead>
+          <tbody>{rows.map((r, i) => <tr key={r.id}><td>{i + 1}</td><td colSpan={2}><a href="#" title={r.answers ? 'Show answers' : 'No answer data saved'} onClick={e => { e.preventDefault(); r.answers && setOpen(open === r.id ? null : r.id); }}>{r.surname} {r.student}</a></td>
             <td><b>{r.score}/{r.total}</b></td><td className={pct(r) >= 60 ? 'adm-pass' : 'adm-fail'}>{pct(r)}%</td>
             <td className={r.violations ? 'adm-fail' : ''}>{r.violations ?? 0}</td>
             <td>{new Date(r.created_at).toLocaleString()}</td>
             <td><button disabled={!r.answers} title={r.answers ? 'Show answers' : 'No answer data saved'} onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? '▲' : '▼'}</button> <button className="x" title="Delete result" onClick={run(async () => { if (confirm(`Delete result of ${r.surname} ${r.student}?`)) { await api('/results/' + r.id, 'DELETE'); refresh(); } })}>×</button></td></tr>)}</tbody></table>
-        {rows.filter(r => r.id === open).map(r => <div key={r.id} className="adm-detail"><b>{r.surname} {r.student}</b> — wrong answers:
-          {qs.filter(q => r.answers[q.id] !== undefined && r.answers[q.id] !== q.answer).map(q => <div key={q.id} className="adm-q">
-            <b>{q.text}</b><br /><span className="adm-fail">Chose: {r.answers[q.id] < 0 ? '— (no answer)' : q.options[r.answers[q.id]]}</span> · <span className="adm-pass">Correct: {q.options[q.answer]}</span></div>)}
-          {r.score === r.total && <div>None — perfect score 🎉</div>}</div>)}
+        {rows.filter(r => r.id === open).map(r => <div key={r.id} className="adm-detail"><b>{r.surname} {r.student}</b> — {r.score}/{r.total} correct
+          {qs.filter(q => r.answers[q.id] !== undefined).map(q => { const a = r.answers[q.id], good = a === q.answer; return <div key={q.id} className="adm-q">
+            <span className={good ? 'adm-pass' : 'adm-fail'}>{good ? '✓' : '✗'}</span> <b>{q.text}</b><br />
+            {good ? <span className="adm-pass">Chose: {q.options[a]}</span> : <><span className="adm-fail">Chose: {a < 0 ? '— (no answer)' : q.options[a]}</span> · <span className="adm-pass">Correct: {q.options[q.answer]}</span></>}</div>; })}</div>)}
       </div>)}
     </>}
 
