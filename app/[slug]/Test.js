@@ -6,7 +6,10 @@ const UI = {
     portalName: 'Talaba Test Tizimi',
     portalSub: 'Rasmiy bilim baholash portali',
     examBadge: 'Yakuniy Nazorat',
-    metaQuestions: '25 ta savol',
+    metaQuestionsLabel: 'Savollar',
+    metaTypeLabel: 'Format',
+    metaAttemptLabel: 'Urinish',
+    metaQuestions: 'ta savol',
     metaType: '1 ta to‘g‘ri javob',
     metaAttempt: 'Bir martalik urinish',
     studentInfoHeading: 'Talaba ma’lumotlari',
@@ -47,7 +50,10 @@ const UI = {
     portalName: 'Студенческий портал',
     portalSub: 'Официальная система тестирования',
     examBadge: 'Итоговый контроль',
-    metaQuestions: '25 вопросов',
+    metaQuestionsLabel: 'Вопросы',
+    metaTypeLabel: 'Формат',
+    metaAttemptLabel: 'Попытка',
+    metaQuestions: 'вопросов',
     metaType: '1 правильный ответ',
     metaAttempt: 'Одна попытка сдачи',
     studentInfoHeading: 'Данные студента',
@@ -319,21 +325,21 @@ export default function Test({ slug, title, questions = [] }) {
             <div className="test-meta-item">
               <span className="meta-icon">📋</span>
               <div className="meta-content">
-                <span className="meta-label">Savollar</span>
+                <span className="meta-label">{t.metaQuestionsLabel}</span>
                 <span className="meta-val">{totalQuestions || 25} {t.metaQuestions}</span>
               </div>
             </div>
             <div className="test-meta-item">
               <span className="meta-icon">🎯</span>
               <div className="meta-content">
-                <span className="meta-label">Format</span>
+                <span className="meta-label">{t.metaTypeLabel}</span>
                 <span className="meta-val">{t.metaType}</span>
               </div>
             </div>
             <div className="test-meta-item">
               <span className="meta-icon">🔒</span>
               <div className="meta-content">
-                <span className="meta-label">Urinish</span>
+                <span className="meta-label">{t.metaAttemptLabel}</span>
                 <span className="meta-val">{t.metaAttempt}</span>
               </div>
             </div>
