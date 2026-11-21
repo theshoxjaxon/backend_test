@@ -1,4 +1,4 @@
-// Junior CSS basics test at /css. Usage: node --env-file=.env seed-css.js [--dry]
+// Junior CSS basics test at /css. Usage: node --env-file=.env seed-css.js [--dry | --ru-only]
 // Each row: [question, correct answer, wrong, wrong, wrong]. Options get shuffled. Re-runnable (replaces questions).
 import { createClient } from '@supabase/supabase-js';
 const Q = [
@@ -55,12 +55,88 @@ const Q = [
   ['position: absolute; element qaysiga nisbatan joylashadi?', 'Eng yaqin position berilgan ota elementga', 'Doim brauzer oynasiga', 'Doim <body> ga', 'O‘zining oldingi qo‘shnisiga'],
   ['Shriftni o‘zgartiradigan xossa qaysi?', 'font-family', 'font-type', 'text-font', 'typeface'],
 ];
+// Russian, same order and same correct-first layout as Q.
+const R = [
+  ['Для чего используется CSS?', 'Для оформления внешнего вида (дизайна) веб-страницы', 'Для написания логики страницы', 'Для работы с базой данных', 'Для настройки сервера'],
+  ['С помощью какого тега CSS-файл подключается к HTML?', '<link rel="stylesheet" href="style.css">', '<script src="style.css">', '<style src="style.css">', '<css href="style.css">'],
+  ['Какой тег используется, чтобы писать CSS прямо внутри HTML?', '<style>', '<css>', '<script>', '<design>'],
+  ['В какую часть HTML пишется тег <link>?', 'Внутрь <head>', 'Внутрь <footer>', 'Внутрь <title>', 'После </html>'],
+  ['Каким атрибутом задаётся inline-стиль (внутри тега) элементу?', 'style', 'class', 'css', 'font'],
+  ['Найдите правильно записанное правило CSS.', 'p { color: red; }', 'p ( color = red )', 'p: { color - red }', '<p> color: red </p>'],
+  ['Как записывается селектор класса?', '.box', '#box', 'box', '*box'],
+  ['Как записывается селектор id?', '#box', '.box', '@box', '&box'],
+  ['Как в CSS записывается комментарий?', '/* комментарий */', '// комментарий', '<!-- комментарий -->', '# комментарий'],
+  ['Какое свойство меняет цвет текста?', 'color', 'text-color', 'font-color', 'background'],
+  ['Какое свойство задаёт цвет фона элемента?', 'background-color', 'color', 'bg', 'fill-color'],
+  ['Какая запись цвета НЕ является правильной?', 'rgb(300%, red, 0)', '#ff0000', 'red', 'rgb(255, 0, 0)'],
+  ['Какой цвет обозначает #ffffff?', 'Белый', 'Чёрный', 'Красный', 'Синий'],
+  ['Какое свойство меняет размер шрифта?', 'font-size', 'text-size', 'font-style', 'size'],
+  ['Какое свойство используется для выравнивания текста по центру?', 'text-align: center;', 'align: center;', 'font-align: center;', 'text-center: true;'],
+  ['Какой элемент по умолчанию является BLOCK?', '<div>', '<span>', '<a>', '<strong>'],
+  ['Какой элемент по умолчанию является INLINE?', '<span>', '<div>', '<p>', '<h1>'],
+  ['Какова главная особенность block-элемента?', 'Начинается с новой строки и занимает всю ширину', 'Стоит в одной строке с другими элементами', 'Не принимает width и height', 'Не отображается на экране'],
+  ['Какое утверждение об inline-элементе верно?', 'Занимает только ширину своего содержимого и стоит в строке', 'Всегда начинается с новой строки', 'Всегда занимает всю ширину', 'Полностью принимает width и height'],
+  ['Для чего нужен inline-block?', 'Стоит в строке, но принимает width и height', 'Скрывает элемент', 'Делает элемент flex', 'Переносит элемент на новую строку'],
+  ['Какое значение полностью скрывает элемент (место тоже не остаётся)?', 'display: none;', 'visibility: hidden;', 'opacity: 1;', 'display: hide;'],
+  ['В каком порядке расположены части box model изнутри наружу?', 'content → padding → border → margin', 'content → margin → border → padding', 'margin → border → padding → content', 'content → border → margin → padding'],
+  ['Что такое padding?', 'Внутренний отступ между содержимым и border', 'Расстояние снаружи элемента', 'Линия элемента', 'Цвет элемента'],
+  ['Что такое margin?', 'Внешний отступ от элемента до других элементов', 'Расстояние внутри содержимого', 'Линия границы элемента', 'Шрифт элемента'],
+  ['Что такое border?', 'Линия границы вокруг padding', 'Пустое место снаружи элемента', 'Пустое место внутри содержимого', 'Фоновое изображение'],
+  ['Какая запись правильно задаёт border?', 'border: 2px solid black;', 'border: black 2 line;', 'border = 2px black;', 'border: solid-2px;'],
+  ['Что означают 10px и 20px в записи margin: 10px 20px;?', 'Сверху/снизу 10px, слева/справа 20px', 'Сверху/снизу 20px, слева/справа 10px', 'Только сверху 10px, снизу 20px', 'Слева 10px, справа 20px'],
+  ['Что написать, чтобы по горизонтали отцентрировать block-элемент (с заданной width)?', 'margin: 0 auto;', 'text-align: center;', 'padding: auto;', 'align: middle;'],
+  ['Что меняет box-sizing: border-box;?', 'В width входят также padding и border', 'Width измеряет только содержимое', 'Добавляет элементу рамку', 'Отключает margin'],
+  ['Что нужно написать, чтобы включить flexbox у элемента?', 'display: flex;', 'flex: on;', 'position: flex;', 'layout: flex;'],
+  ['К какому элементу применяется display: flex;?', 'К родительскому контейнеру', 'Только к одному из дочерних', 'Только к <body>', 'Только к картинке'],
+  ['В каком направлении элементы во flexbox располагаются по умолчанию?', 'По горизонтали (row)', 'По вертикали (column)', 'По диагонали', 'Случайно'],
+  ['Что написать, чтобы flex-элементы шли вертикально (столбцом)?', 'flex-direction: column;', 'flex-direction: vertical;', 'flex-flow: up;', 'direction: column;'],
+  ['Чем управляет justify-content во flexbox?', 'Расположением вдоль главной оси (main axis)', 'Расположением вдоль поперечной оси', 'Размером шрифта', 'Цветом элементов'],
+  ['Чем управляет align-items во flexbox?', 'Расположением вдоль поперечной оси (cross axis)', 'Количеством элементов', 'Цветом текста', 'Границей между элементами'],
+  ['Как с помощью flex отцентрировать элемент и по горизонтали, и по вертикали?', 'justify-content: center; align-items: center;', 'text-align: center; vertical-align: center;', 'margin: center;', 'position: center;'],
+  ['Какое свойство удобно для задания промежутка между flex-элементами?', 'gap', 'space', 'margin-between', 'spacing'],
+  ['Что делает justify-content: space-between;?', 'Прижимает элементы к краям и равномерно распределяет промежутки между ними', 'Собирает всех в центре', 'Сдвигает всех вправо', 'Скрывает элементы'],
+  ['Что написать, чтобы flex-элементы при нехватке места переносились на следующую строку?', 'flex-wrap: wrap;', 'flex-wrap: break;', 'flex-line: new;', 'wrap: true;'],
+  ['Какое свойство задаёт ширину элемента?', 'width', 'size-x', 'length', 'wide'],
+  ['px, %, rem — что это?', 'Единицы измерения в CSS', 'Названия цветов', 'Типы селекторов', 'HTML-теги'],
+  ['Что означает width: 50%;?', 'Половину ширины родительского элемента', '50 пикселей экрана', 'Половину прозрачности элемента', 'Половину размера текста'],
+  ['Какое свойство используется, чтобы скруглить углы у картинки?', 'border-radius', 'corner-round', 'border-curve', 'radius'],
+  ['Какое свойство используется, чтобы добавить элементу тень?', 'box-shadow', 'shadow-box', 'element-shadow', 'drop'],
+  ['Какое свойство используется, чтобы поставить картинку в качестве фона?', 'background-image: url("rasm.jpg");', 'background: image("rasm.jpg");', 'img-background: rasm.jpg;', 'bg-src: rasm.jpg;'],
+  ['Какое значение заставляет фоновую картинку заполнить весь элемент с обрезкой?', 'background-size: cover;', 'background-size: small;', 'background-repeat: all;', 'background-fit: full;'],
+  ['Что используется, чтобы задать стиль при наведении мыши (hover)?', 'a:hover { }', 'a::hover { }', 'a.onhover { }', 'a#hover { }'],
+  ['Как разделяются селекторы, чтобы задать один стиль нескольким элементам?', 'Запятой: h1, p { }', 'Точкой: h1. p { }', 'Дефисом: h1-p { }', 'Точкой с запятой: h1; p { }'],
+  ['Если есть несколько class и id, что приоритетнее (specificity)?', 'id', 'class', 'Селектор тега (элемента)', 'Все равны'],
+  ['Что написать, чтобы стиль имел приоритет над всеми остальными?', '!important', '!first', '!override', '!strong'],
+  ['Относительно чего позиционируется элемент с position: absolute;?', 'Ближайшего родителя с заданным position', 'Всегда окна браузера', 'Всегда <body>', 'Своего предыдущего соседа'],
+  ['Какое свойство меняет шрифт?', 'font-family', 'font-type', 'text-font', 'typeface'],
+];
+if (R.length !== Q.length || R.some((r, i) => r.length !== Q[i].length)) throw new Error('Q/R mismatch');
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const questions = Q.map(([text, ...o]) => { const opts = shuffle(o.map((t, k) => ({ t, ok: !k }))); return { text, options: opts.map(x => x.t), answer: opts.findIndex(x => x.ok) }; });
+const questions = Q.map(([text, ...o], n) => {
+  const opts = shuffle(o.map((t, k) => ({ t, ru: R[n][k + 1], ok: !k })));
+  return { text, text_ru: R[n][0], options: opts.map(x => x.t), options_ru: opts.map(x => x.ru), answer: opts.findIndex(x => x.ok) };
+});
 console.log(`${questions.length} questions`);
 if (process.argv.includes('--dry')) process.exit();
 
 const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+if (process.argv.includes('--ru-only')) { // live test: add Russian in place, keep ids + option order so running students aren't disturbed
+  const { data: t } = await db.from('tests').select('id').eq('slug', 'css').single();
+  const { data: rows } = await db.from('questions').select('id,text,options').eq('test_id', t.id);
+  let n = 0;
+  for (const row of rows) {
+    const q = questions.find(x => x.text === row.text);
+    if (!q) { console.log('no match:', row.text); continue; }
+    const ru = new Map(q.options.map((o, i) => [o, q.options_ru[i]]));
+    const options_ru = row.options.map(o => ru.get(o));
+    if (options_ru.includes(undefined)) { console.log('option mismatch:', row.text); continue; }
+    const u = await db.from('questions').update({ text_ru: q.text_ru, options_ru }).eq('id', row.id);
+    if (u.error) throw u.error;
+    n++;
+  }
+  console.log(`updated ${n}/${rows.length}`);
+  process.exit();
+}
 const { data: t, error } = await db.from('tests').upsert({ slug: 'css', title: 'CSS Basics (Junior)' }, { onConflict: 'slug' }).select().single();
 if (error) throw error;
 await db.from('questions').delete().eq('test_id', t.id);
