@@ -17,7 +17,7 @@ export default function Admin() {
   };
   async function loadTests(pass, select) {
     const t = await api('/tests', 'GET', undefined, pass);
-    setTests(t); setTid(select ?? (t.some(x => x.id == tid) ? tid : t[0]?.id ?? ''));
+    setTests(t); setTid(select ?? (t.some(x => x.id == tid) ? tid : t.at(-1)?.id ?? ''));
   }
   async function login(pass = pw) {
     try { await loadTests(pass); sessionStorage.pw = pass; setPw(pass); setAuthed(true); setErr(''); }
